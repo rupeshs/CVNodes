@@ -52,3 +52,25 @@ class FlipNode:
 
     def run(self, image, direction="Horizontal"):
         return {"image": cv2.flip(image, self._CODES.get(direction, 1))}
+
+
+@register_node("cv/Crop")
+class CropNode:
+    NAME = "Crop"
+    CATEGORY = "OpenCV/Transform"
+    INPUTS = [{"name": "image", "type": "IMAGE"}]
+    OUTPUTS = [{"name": "image", "type": "IMAGE"}]
+    WIDGETS = [
+        {"name": "x", "type": "INT", "default": 0, "min": 0, "max": 8192, "step": 1},
+        {"name": "y", "type": "INT", "default": 0, "min": 0, "max": 8192, "step": 1},
+        {"name": "width", "type": "INT", "default": 100, "min": 1, "max": 8192, "step": 1},
+        {"name": "height", "type": "INT", "default": 100, "min": 1, "max": 8192, "step": 1},
+    ]
+
+    def run(self, image, x=0, y=0, width=100, height=100):
+        h, w = image.shape[:2]
+        x1 = max(0, min(int(x), w - 1))
+        y1 = max(0, min(int(y), h - 1))
+        x2 = max(x1 + 1, min(x1 + int(width), w))
+        y2 = max(y1 + 1, min(y1 + int(height), h))
+        return {"image": image[y1:y2, x1:x2]}

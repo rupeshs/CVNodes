@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 
 from engine.registry import register_node
 
@@ -69,3 +70,71 @@ class SharpenNode:
         blurred = cv2.GaussianBlur(image, (0, 0), 3)
         sharpened = cv2.addWeighted(image, 1 + amount, blurred, -amount, 0)
         return {"image": sharpened}
+
+
+def _kernel(ksize):
+    k = max(1, int(ksize))
+    return np.ones((k, k), np.uint8)
+
+
+@register_node("cv/Dilate")
+class DilateNode:
+    NAME = "Dilate"
+    CATEGORY = "OpenCV/Filters"
+    INPUTS = [{"name": "image", "type": "IMAGE"}]
+    OUTPUTS = [{"name": "image", "type": "IMAGE"}]
+    WIDGETS = [
+        {"name": "ksize", "type": "INT", "default": 5, "min": 1, "max": 51, "step": 1},
+        {"name": "iterations", "type": "INT", "default": 1, "min": 1, "max": 20, "step": 1},
+    ]
+
+    def run(self, image, ksize=5, iterations=1):
+        result = cv2.dilate(image, _kernel(ksize), iterations=max(1, int(iterations)))
+        return {"image": result}
+
+
+@register_node("cv/Erode")
+class ErodeNode:
+    NAME = "Erode"
+    CATEGORY = "OpenCV/Filters"
+    INPUTS = [{"name": "image", "type": "IMAGE"}]
+    OUTPUTS = [{"name": "image", "type": "IMAGE"}]
+    WIDGETS = [
+        {"name": "ksize", "type": "INT", "default": 5, "min": 1, "max": 51, "step": 1},
+        {"name": "iterations", "type": "INT", "default": 1, "min": 1, "max": 20, "step": 1},
+    ]
+
+    def run(self, image, ksize=5, iterations=1):
+        result = cv2.erode(image, _kernel(ksize), iterations=max(1, int(iterations)))
+        return {"image": result}
+
+
+@register_node("cv/Morphology")
+class MorphologyNode:
+    NAME = "Morphology"
+    CATEGORY = "OpenCV/Filters"
+    INPUTS = [{"name": "image", "type": "IMAGE"}]
+    OUTPUTS = [{"name": "image", "type": "IMAGE"}]
+    WIDGETS = [
+        {
+            "name": "operation",
+            "type": "COMBO",
+            "default": "Dilate",
+            "options": ["Erode", "Dilate", "Open", "Close", "Gradient"],
+        },
+        {"name": "ksize", "type": "INT", "default": 5, "min": 1, "max": 51, "step": 1},
+        {"name": "iterations", "type": "INT", "default": 1, "min": 1, "max": 20, "step": 1},
+    ]
+
+    _OPS = {
+        "Erode": cv2.MORPH_ERODE,
+        "Dilate": cv2.MORPH_DILATE,
+        "Open": cv2.MORPH_OPEN,
+        "Close": cv2.MORPH_CLOSE,
+        "Gradient": cv2.MORPH_GRADIENT,
+    }
+
+    def run(self, image, operation="Dilate", ksize=5, iterations=1):
+        op = self._OPS.get(operation, cv2.MORPH_DILATE)
+        result = cv2.morphologyEx(image, op, _kernel(ksize), iterations=max(1, int(iterations)))
+        return {"image": result}
