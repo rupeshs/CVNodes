@@ -1,0 +1,36 @@
+import cv2
+
+from engine.registry import register_node
+
+
+@register_node("cv/Threshold")
+class ThresholdNode:
+    NAME = "Threshold"
+    CATEGORY = "OpenCV/Threshold"
+    INPUTS = [{"name": "image", "type": "IMAGE"}]
+    OUTPUTS = [{"name": "image", "type": "IMAGE"}]
+    WIDGETS = [
+        {"name": "thresh", "type": "INT", "default": 127, "min": 0, "max": 255, "step": 1},
+        {"name": "maxval", "type": "INT", "default": 255, "min": 0, "max": 255, "step": 1},
+        {
+            "name": "mode",
+            "type": "COMBO",
+            "default": "BINARY",
+            "options": ["BINARY", "BINARY_INV", "TRUNC", "TOZERO", "TOZERO_INV", "OTSU"],
+        },
+    ]
+
+    _MODES = {
+        "BINARY": cv2.THRESH_BINARY,
+        "BINARY_INV": cv2.THRESH_BINARY_INV,
+        "TRUNC": cv2.THRESH_TRUNC,
+        "TOZERO": cv2.THRESH_TOZERO,
+        "TOZERO_INV": cv2.THRESH_TOZERO_INV,
+        "OTSU": cv2.THRESH_BINARY + cv2.THRESH_OTSU,
+    }
+
+    def run(self, image, thresh=127, maxval=255, mode="BINARY"):
+        gray = image if image.ndim == 2 else cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        flag = self._MODES.get(mode, cv2.THRESH_BINARY)
+        _ret, result = cv2.threshold(gray, thresh, maxval, flag)
+        return {"image": result}

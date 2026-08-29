@@ -145,7 +145,12 @@ backend/
   nodes/                built-in nodes (ships with the project)
     __init__.py           auto-imports every module in this package
     io_nodes.py            LoadImage, PreviewImage, SaveImage
-    basic_nodes.py         Grayscale, Blur, Canny, Threshold, Resize, etc.
+    color_nodes.py          Grayscale, InvertColors, BrightnessContrast
+    filter_nodes.py         GaussianBlur, MedianBlur, CannyEdge, Sharpen
+    threshold_nodes.py      Threshold
+    transform_nodes.py      Resize, Rotate, Flip
+    compositing_nodes.py    Blend
+    detection_nodes.py      HoughLines
   custom_nodes/         your extensions go here (see custom_nodes/README.md)
     __init__.py           auto-imports every module/subfolder in this package
     removebg/             example node with its own dependency:

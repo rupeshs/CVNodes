@@ -47,7 +47,7 @@ builds its submenu tree dynamically from whatever's currently in use across
 every registered node (built-in and custom).
 
 Current categories: `IO`, `OpenCV/Color`, `OpenCV/Compositing`,
-`OpenCV/Filters`, `OpenCV/Threshold`, `OpenCV/Transform`.
+`OpenCV/Detection`, `OpenCV/Filters`, `OpenCV/Threshold`, `OpenCV/Transform`.
 
 To add a new one, just use a string that doesn't exist yet:
 
@@ -79,7 +79,7 @@ For every node in the graph, in dependency order:
 
 So your `run()` signature should accept every input and widget name as a keyword argument, e.g. for the example above: `def run(self, image, amount=1.0)`. Give widget parameters a Python default too - matches the pattern the built-in nodes use and keeps `run()` callable on its own (handy for testing, see below).
 
-Multiple inputs/outputs work exactly the same way - `cv/Blend` (in `backend/nodes/basic_nodes.py`) takes two images and returns one:
+Multiple inputs/outputs work exactly the same way - `cv/Blend` (in `backend/nodes/compositing_nodes.py`) takes two images and returns one:
 
 ```python
 INPUTS = [{"name": "image_a", "type": "IMAGE"}, {"name": "image_b", "type": "IMAGE"}]
@@ -202,7 +202,7 @@ Python shell (from `backend/`, with the venv active):
 
 ```python
 import cv2
-from nodes.basic_nodes import GaussianBlurNode  # or your custom_nodes module
+from nodes.filter_nodes import GaussianBlurNode  # or your custom_nodes module
 
 img = cv2.imread("uploads/sample.jpg")
 result = GaussianBlurNode().run(img, ksize=9, sigma=2.0)["image"]
