@@ -8,14 +8,14 @@ A ComfyUI-style node-based editor for image processing, built on LiteGraph.js
 
 ## Features
 
-• 🎨 **Visual Node Editor** - Build OpenCV workflows visually with drag and drop nodes.
-• 🧩 **Dynamic Nodes** - Node definitions load from the backend with no frontend changes.
-• 🖼️ **Inline Previews** - View image results directly inside nodes.
-• 🔌 **Custom Nodes** - Add Python nodes with automatic dependency installation.
-• 📂 **Node Categories** - Automatically organize nodes into nested categories.
-• 🛡️ **Resilient Startup** - Broken or missing dependency nodes are skipped safely.
-• 💾 **Save & Load** - Export and restore workflows as JSON.
-• ⏱️ **Execution Timing** - Track execution time for every node.
+- 🎨 **Visual Node Editor** - Build OpenCV workflows visually with drag and drop nodes.
+- 🧩 **Dynamic Nodes** - Node definitions load from the backend with no frontend changes.
+- 🖼️ **Inline Previews** - View image results directly inside nodes.
+- 🔌 **Custom Nodes** - Add Python nodes with automatic dependency installation.
+- 📂 **Node Categories** - Automatically organize nodes into nested categories.
+- 🛡️ **Resilient Startup** - Broken or missing dependency nodes are skipped safely.
+- 💾 **Save & Load** - Export and restore workflows as JSON.
+- ⏱️ **Execution Timing** - Track execution time for every node.
 
 
 
