@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+build/
+dist/
+
+# Backend virtual environment
+backend/.venv/
+
+# Runtime data - user-uploaded/generated images
+backend/uploads/*
+!backend/uploads/.gitkeep
+!backend/uploads/sample.jpg
+backend/outputs/*
+!backend/outputs/.gitkeep
+
+# Auto-install cache marker for custom node dependencies (see engine/discovery.py)
+.requirements_installed
+
+# Environment/secrets
+.env
+.env.*
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# OS junk files
+.DS_Store
+Thumbs.db

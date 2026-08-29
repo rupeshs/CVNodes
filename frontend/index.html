@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>CVNodes</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litegraph.js@0.7.18/css/litegraph.css" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <header id="toolbar">
+    <span class="brand">CVNodes</span>
+    <button id="run-btn">▶ Run</button>
+    <button id="save-btn">Save Graph</button>
+    <button id="load-btn">Load Graph</button>
+    <input type="file" id="load-input" accept="application/json" style="display:none" />
+    <span id="status" class="status-pill" data-state="idle">
+      <span class="status-dot"></span>
+      <span class="status-text"></span>
+    </span>
+  </header>
+
+  <main>
+    <div id="canvas-wrap">
+      <canvas id="graph-canvas"></canvas>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/litegraph.js@0.7.18/build/litegraph.min.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
