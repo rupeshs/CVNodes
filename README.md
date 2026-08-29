@@ -146,7 +146,8 @@ backend/
     __init__.py           auto-imports every module in this package
     io_nodes.py            LoadImage, PreviewImage, SaveImage
     color_nodes.py          Grayscale, InvertColors, BrightnessContrast
-    filter_nodes.py         GaussianBlur, MedianBlur, CannyEdge, Sharpen, Dilate, Erode, Morphology
+    filter_nodes.py         GaussianBlur, MedianBlur, CannyEdge, Sobel, Laplacian, BilateralFilter,
+                              Sharpen, Dilate, Erode, Morphology
     threshold_nodes.py      Threshold, AdaptiveThreshold
     transform_nodes.py      Resize, Rotate, Flip, Crop
     compositing_nodes.py    Blend

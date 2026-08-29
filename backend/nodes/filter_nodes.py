@@ -58,6 +58,62 @@ class CannyEdgeNode:
         return {"image": cv2.Canny(gray, threshold1, threshold2)}
 
 
+@register_node("cv/Sobel")
+class SobelNode:
+    NAME = "Sobel"
+    CATEGORY = "OpenCV/Filters"
+    INPUTS = [{"name": "image", "type": "IMAGE"}]
+    OUTPUTS = [{"name": "image", "type": "IMAGE"}]
+    WIDGETS = [
+        {"name": "direction", "type": "COMBO", "default": "Both", "options": ["X", "Y", "Both"]},
+        {"name": "ksize", "type": "INT", "default": 3, "min": 1, "max": 7, "step": 2},
+    ]
+
+    def run(self, image, direction="Both", ksize=3):
+        gray = image if image.ndim == 2 else cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        k = _odd(ksize)
+        if direction == "X":
+            grad = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=k)
+        elif direction == "Y":
+            grad = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=k)
+        else:
+            gx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=k)
+            gy = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=k)
+            grad = cv2.magnitude(gx, gy)
+        return {"image": cv2.convertScaleAbs(grad)}
+
+
+@register_node("cv/Laplacian")
+class LaplacianNode:
+    NAME = "Laplacian"
+    CATEGORY = "OpenCV/Filters"
+    INPUTS = [{"name": "image", "type": "IMAGE"}]
+    OUTPUTS = [{"name": "image", "type": "IMAGE"}]
+    WIDGETS = [{"name": "ksize", "type": "INT", "default": 3, "min": 1, "max": 31, "step": 2}]
+
+    def run(self, image, ksize=3):
+        gray = image if image.ndim == 2 else cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        lap = cv2.Laplacian(gray, cv2.CV_64F, ksize=_odd(ksize))
+        return {"image": cv2.convertScaleAbs(lap)}
+
+
+@register_node("cv/BilateralFilter")
+class BilateralFilterNode:
+    NAME = "Bilateral Filter"
+    CATEGORY = "OpenCV/Filters"
+    INPUTS = [{"name": "image", "type": "IMAGE"}]
+    OUTPUTS = [{"name": "image", "type": "IMAGE"}]
+    WIDGETS = [
+        {"name": "d", "type": "INT", "default": 9, "min": 1, "max": 25, "step": 1},
+        {"name": "sigma_color", "type": "FLOAT", "default": 75, "min": 1, "max": 200, "step": 1},
+        {"name": "sigma_space", "type": "FLOAT", "default": 75, "min": 1, "max": 200, "step": 1},
+    ]
+
+    def run(self, image, d=9, sigma_color=75, sigma_space=75):
+        result = cv2.bilateralFilter(image, int(d), float(sigma_color), float(sigma_space))
+        return {"image": result}
+
+
 @register_node("cv/Sharpen")
 class SharpenNode:
     NAME = "Sharpen"
