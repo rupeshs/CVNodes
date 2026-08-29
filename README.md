@@ -3,6 +3,70 @@
 A ComfyUI-style node-based editor for image processing, built on LiteGraph.js
 (frontend) and Python + OpenCV (backend).
 
+<!-- Add a screenshot of the node editor here, e.g. docs/screenshot.png -->
+![CVNodes screenshot](docs/cvnodes-screenshot.png)
+
+## Features
+
+• 🎨 **Visual Node Editor** - Build OpenCV workflows visually with drag and drop nodes.
+• 🧩 **Dynamic Nodes** - Node definitions load from the backend with no frontend changes.
+• 🖼️ **Inline Previews** - View image results directly inside nodes.
+• 🔌 **Custom Nodes** - Add Python nodes with automatic dependency installation.
+• 📂 **Node Categories** - Automatically organize nodes into nested categories.
+• 🛡️ **Resilient Startup** - Broken or missing dependency nodes are skipped safely.
+• 💾 **Save & Load** - Export and restore workflows as JSON.
+• ⏱️ **Execution Timing** - Track execution time for every node.
+
+
+
+
+## Running it
+
+```bash
+cd backend
+python -m venv .venv
+.venv/Scripts/activate   # or: source .venv/bin/activate on macOS/Linux
+pip install -r requirements.txt
+uvicorn server:app --reload
+```
+
+That's it - just the core install. Custom nodes that live in their own
+subfolder with a `requirements.txt` (like `custom_nodes/removebg/`) get
+their dependencies installed **automatically on server startup**, before
+that node is imported - no separate `pip install` step. The first startup
+after adding such a node takes longer (it's really running `pip install`
+for you); after that it's cached and skipped on every subsequent restart
+unless that node's `requirements.txt` changes. If it fails (no internet,
+etc.), that one node is skipped with a warning - everything else still
+works (see [How it's extensible](#how-its-extensible) below for why one
+missing dependency can't take down the rest of the app).
+
+Open http://127.0.0.1:8000
+
+## Try the sample workflows
+
+Both use the bundled `backend/uploads/sample.jpg`. Click **Load Graph** in
+the toolbar, pick one of these, then click **Run**.
+
+- `examples/basic_pipeline.json` - `Load Image` branches into two chains:
+  `Brightness/Contrast → Gaussian Blur → Canny Edge → Preview Image`, and
+  `Grayscale → Save Image`.
+- `examples/remove_background.json` - `Load Image → Remove Background →`
+  (`Preview Image` + `Save Image`). Uses the `cv/RemoveBackground` custom
+  node (see below) - the first run downloads/loads the segmentation model
+  and can take ~30s; after that it's fast.
+
+## Using it
+
+1. Double-click the canvas (or right-click → Add Node) to add nodes, e.g.
+   `IO > Load Image`, a few `OpenCV/*` filters, and `IO > Preview Image`.
+2. Click the image-upload widget on the Load Image node to pick a file - a
+   thumbnail appears on the node right away, no need to run anything.
+3. Wire nodes together by dragging from output to input dots.
+4. Click **Run** in the top toolbar. Every `Preview Image` / `Save Image`
+   node shows its result as a thumbnail directly on the node (ComfyUI-style).
+5. **Save Graph** / **Load Graph** exports/imports the workflow as JSON.
+
 ## Use cases
 
 - **Product photo prep** - `Load Image → Remove Background → Resize → Save Image`, reusable across a whole catalog.
@@ -66,54 +130,6 @@ is skipped with a warning instead of crashing the server.
 Supported `WIDGETS` types: `INT`, `FLOAT`, `BOOL`, `STRING`, `COMBO`
 (needs an `"options": [...]` list), and `IMAGE_UPLOAD` (renders a
 file-picker button, used by `LoadImage`).
-
-## Running it
-
-```bash
-cd backend
-python -m venv .venv
-.venv/Scripts/activate   # or: source .venv/bin/activate on macOS/Linux
-pip install -r requirements.txt
-uvicorn server:app --reload
-```
-
-That's it - just the core install. Custom nodes that live in their own
-subfolder with a `requirements.txt` (like `custom_nodes/removebg/`) get
-their dependencies installed **automatically on server startup**, before
-that node is imported - no separate `pip install` step. The first startup
-after adding such a node takes longer (it's really running `pip install`
-for you); after that it's cached and skipped on every subsequent restart
-unless that node's `requirements.txt` changes. If it fails (no internet,
-etc.), that one node is skipped with a warning - everything else still
-works (see [How it's extensible](#how-its-extensible) below for why one
-missing dependency can't take down the rest of the app).
-
-Open http://127.0.0.1:8000
-
-## Try the sample workflows
-
-Both use the bundled `backend/uploads/sample.jpg`. Click **Load Graph** in
-the toolbar, pick one of these, then click **Run**.
-
-- `examples/basic_pipeline.json` - `Load Image` branches into two chains:
-  `Brightness/Contrast → Gaussian Blur → Canny Edge → Preview Image`, and
-  `Grayscale → Save Image`.
-- `examples/remove_background.json` - `Load Image → Remove Background →`
-  (`Preview Image` + `Save Image`). Uses the `cv/RemoveBackground` custom
-  node (see below) - the first run downloads/loads the segmentation model
-  and can take ~30s; after that it's fast.
-
-## Using it
-
-1. Double-click the canvas (or right-click → Add Node) to add nodes, e.g.
-   `IO > Load Image`, a few `OpenCV/*` filters, and `IO > Preview Image`.
-2. Click the image-upload widget on the Load Image node to pick a file - a
-   thumbnail appears on the node right away, no need to run anything.
-3. Wire nodes together by dragging from output to input dots.
-4. Click **Run** in the top toolbar. Every `Preview Image` / `Save Image`
-   node shows its result as a thumbnail directly on the node (ComfyUI-style).
-5. **Save Graph** / **Load Graph** exports/imports the workflow as JSON.
-
 ## Project layout
 
 ```
