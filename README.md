@@ -55,6 +55,10 @@ the toolbar, pick one of these, then click **Run**.
   (`Preview Image` + `Save Image`). Uses the `cv/RemoveBackground` custom
   node (see below) - the first run downloads/loads the segmentation model
   and can take ~30s; after that it's fast.
+- `examples/find_contours.json` - `Load Image → Grayscale → Threshold (OTSU) →
+  Morphology (Close) → Find Contours →` (`Preview Image` showing drawn
+  contours, and `Bounding Boxes` on the original color image → `Preview
+  Image`). Shows the `CONTOURS` data output being consumed by a second node.
 
 ## Using it
 
