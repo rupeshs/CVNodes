@@ -81,11 +81,17 @@ class CropNode:
 class PerspectiveWarpNode:
     NAME = "Perspective Warp"
     CATEGORY = "OpenCV/Transform"
-    INPUTS = [{"name": "image", "type": "IMAGE"}]
+    INPUTS = [
+        {"name": "image", "type": "IMAGE"},
+        {"name": "corners", "type": "CORNERS"},
+    ]
     OUTPUTS = [{"name": "image", "type": "IMAGE"}]
-    # Corners are given as % of image width/height, so the defaults (the
-    # image's own corners) work for any input size without knowing it ahead
-    # of time. Drag a corner inward/outward to correct perspective distortion.
+    # The widget corners are given as % of image width/height, so the
+    # defaults (the image's own corners) work for any input size without
+    # knowing it ahead of time - drag a corner inward/outward to correct
+    # perspective distortion. If the "corners" input is connected (e.g. from
+    # an Approx Quad node), those absolute pixel points are used instead and
+    # the widgets are ignored.
     WIDGETS = [
         {"name": "tl_x", "type": "FLOAT", "default": 0, "min": -50, "max": 150, "step": 1},
         {"name": "tl_y", "type": "FLOAT", "default": 0, "min": -50, "max": 150, "step": 1},
@@ -97,16 +103,31 @@ class PerspectiveWarpNode:
         {"name": "bl_y", "type": "FLOAT", "default": 100, "min": -50, "max": 150, "step": 1},
     ]
 
-    def run(self, image, tl_x=0, tl_y=0, tr_x=100, tr_y=0, br_x=100, br_y=100, bl_x=0, bl_y=100):
+    def run(
+        self,
+        image,
+        corners=None,
+        tl_x=0,
+        tl_y=0,
+        tr_x=100,
+        tr_y=0,
+        br_x=100,
+        br_y=100,
+        bl_x=0,
+        bl_y=100,
+    ):
         h, w = image.shape[:2]
-        src = np.float32(
-            [
-                [tl_x / 100 * w, tl_y / 100 * h],
-                [tr_x / 100 * w, tr_y / 100 * h],
-                [br_x / 100 * w, br_y / 100 * h],
-                [bl_x / 100 * w, bl_y / 100 * h],
-            ]
-        )
+        if corners:
+            src = np.float32(corners)
+        else:
+            src = np.float32(
+                [
+                    [tl_x / 100 * w, tl_y / 100 * h],
+                    [tr_x / 100 * w, tr_y / 100 * h],
+                    [br_x / 100 * w, br_y / 100 * h],
+                    [bl_x / 100 * w, bl_y / 100 * h],
+                ]
+            )
         dst = np.float32([[0, 0], [w, 0], [w, h], [0, h]])
         matrix = cv2.getPerspectiveTransform(src, dst)
         return {"image": cv2.warpPerspective(image, matrix, (w, h))}

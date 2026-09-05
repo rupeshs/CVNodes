@@ -108,6 +108,47 @@ class FindContoursNode:
         return {"image": canvas, "contours": contours}
 
 
+def _order_quad_points(pts):
+    """Orders 4 points as [top-left, top-right, bottom-right, bottom-left],
+    the corner order cv2.getPerspectiveTransform's dst rectangle expects."""
+    pts = np.array(pts, dtype=np.float32)
+    total = pts.sum(axis=1)
+    diff = np.diff(pts, axis=1).flatten()
+    top_left = pts[np.argmin(total)]
+    bottom_right = pts[np.argmax(total)]
+    top_right = pts[np.argmin(diff)]
+    bottom_left = pts[np.argmax(diff)]
+    return [top_left.tolist(), top_right.tolist(), bottom_right.tolist(), bottom_left.tolist()]
+
+
+@register_node("cv/ApproxQuad")
+class ApproxQuadNode:
+    NAME = "Approx Quad"
+    CATEGORY = "OpenCV/Detection"
+    INPUTS = [{"name": "contours", "type": "CONTOURS"}]
+    OUTPUTS = [{"name": "corners", "type": "CORNERS"}]
+    WIDGETS = [
+        {"name": "epsilon", "type": "FLOAT", "default": 0.02, "min": 0.001, "max": 0.2, "step": 0.001},
+    ]
+
+    def run(self, contours, epsilon=0.02):
+        if not contours:
+            raise ValueError("No contours to approximate")
+
+        largest = max(contours, key=lambda c: c["area"])
+        pts = np.array(largest["points"], dtype=np.int32).reshape(-1, 1, 2)
+        peri = cv2.arcLength(pts, True)
+        approx = cv2.approxPolyDP(pts, epsilon * peri, True)
+
+        if len(approx) != 4:
+            raise ValueError(
+                f"Largest contour approximated to {len(approx)} points, not 4 - "
+                "adjust epsilon or feed a more rectangular contour"
+            )
+
+        return {"corners": _order_quad_points(approx.reshape(-1, 2))}
+
+
 _BOX_COLORS = {
     "Blue": (255, 0, 0),
     "Red": (0, 0, 255),

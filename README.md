@@ -82,6 +82,13 @@ one of these, then click **Run**.
 - `examples/perspective_warp.json` - `Load Image → Perspective Warp →
   Preview Image`. Drags each of the image's 4 corners inward by a few
   percent to demonstrate correcting/adding perspective distortion.
+- `examples/document_scan.json` - `Load Image → Grayscale → Threshold →
+  Find Contours → Approx Quad →` feeds the detected 4-point quad into
+  `Perspective Warp`'s `corners` input (alongside the original color image)
+  `→ Preview Image`. The auto-corner-detection counterpart to
+  `perspective_warp.json`'s manual sliders - the classic "document scanner"
+  pattern (find the page's outline, then rectify it), demoed here on
+  sample.jpg's white square.
 
 ## Using it
 
@@ -179,8 +186,8 @@ backend/
     threshold_nodes.py      Threshold, AdaptiveThreshold
     transform_nodes.py      Resize, Rotate, Flip, Crop, PerspectiveWarp
     compositing_nodes.py    Blend, BitwiseOp, ApplyMask
-    detection_nodes.py      HoughLines, FindContours, BoundingBoxes, HoughCircles, TemplateMatch,
-                              ConnectedComponents, FaceDetect
+    detection_nodes.py      HoughLines, FindContours, ApproxQuad, BoundingBoxes, HoughCircles,
+                              TemplateMatch, ConnectedComponents, FaceDetect
   custom_nodes/         your extensions go here (see custom_nodes/README.md)
     __init__.py           auto-imports every module/subfolder in this package
     removebg/             example node with its own dependency:
