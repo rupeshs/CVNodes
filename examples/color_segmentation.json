@@ -1,0 +1,151 @@
+{
+  "last_node_id": 8,
+  "last_link_id": 9,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "cv/LoadImage",
+      "pos": [40, 240],
+      "size": [266, 282],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [1, 2]
+        }
+      ],
+      "properties": {},
+      "widgets_values": ["sample.jpg"]
+    },
+    {
+      "id": 2,
+      "type": "cv/ColorConvert",
+      "pos": [360, 60],
+      "size": [200, 60],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        { "name": "image", "type": "IMAGE", "link": 1 }
+      ],
+      "outputs": [
+        { "name": "image", "type": "IMAGE", "links": [3, 4] }
+      ],
+      "properties": {},
+      "widgets_values": ["BGR to HSV"]
+    },
+    {
+      "id": 3,
+      "type": "cv/InRange",
+      "pos": [620, 20],
+      "size": [220, 170],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        { "name": "image", "type": "IMAGE", "link": 3 }
+      ],
+      "outputs": [
+        { "name": "mask", "type": "IMAGE", "links": [5] }
+      ],
+      "properties": {},
+      "widgets_values": [10, 100, 100, 30, 255, 255]
+    },
+    {
+      "id": 4,
+      "type": "cv/InRange",
+      "pos": [620, 260],
+      "size": [220, 170],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        { "name": "image", "type": "IMAGE", "link": 4 }
+      ],
+      "outputs": [
+        { "name": "mask", "type": "IMAGE", "links": [6] }
+      ],
+      "properties": {},
+      "widgets_values": [45, 100, 100, 75, 255, 255]
+    },
+    {
+      "id": 5,
+      "type": "cv/BitwiseOp",
+      "pos": [900, 150],
+      "size": [200, 70],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        { "name": "image_a", "type": "IMAGE", "link": 5 },
+        { "name": "image_b", "type": "IMAGE", "link": 6 }
+      ],
+      "outputs": [
+        { "name": "image", "type": "IMAGE", "links": [7, 8] }
+      ],
+      "properties": {},
+      "widgets_values": ["OR"]
+    },
+    {
+      "id": 6,
+      "type": "cv/PreviewImage",
+      "pos": [1140, 40],
+      "size": [140, 26],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        { "name": "image", "type": "IMAGE", "link": 7 }
+      ],
+      "properties": {}
+    },
+    {
+      "id": 7,
+      "type": "cv/ApplyMask",
+      "pos": [1140, 220],
+      "size": [200, 60],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        { "name": "image", "type": "IMAGE", "link": 2 },
+        { "name": "mask", "type": "IMAGE", "link": 8 }
+      ],
+      "outputs": [
+        { "name": "image", "type": "IMAGE", "links": [9] }
+      ],
+      "properties": {}
+    },
+    {
+      "id": 8,
+      "type": "cv/PreviewImage",
+      "pos": [1400, 220],
+      "size": [140, 26],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        { "name": "image", "type": "IMAGE", "link": 9 }
+      ],
+      "properties": {}
+    }
+  ],
+  "links": [
+    [1, 1, 0, 2, 0, "IMAGE"],
+    [2, 1, 0, 7, 0, "IMAGE"],
+    [3, 2, 0, 3, 0, "IMAGE"],
+    [4, 2, 0, 4, 0, "IMAGE"],
+    [5, 3, 0, 5, 0, "IMAGE"],
+    [6, 4, 0, 5, 1, "IMAGE"],
+    [7, 5, 0, 6, 0, "IMAGE"],
+    [8, 5, 0, 7, 1, "IMAGE"],
+    [9, 7, 0, 8, 0, "IMAGE"]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {},
+  "version": 0.4
+}

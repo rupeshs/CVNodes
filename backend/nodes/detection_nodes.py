@@ -1,6 +1,9 @@
+import urllib.request
+
 import cv2
 import numpy as np
 
+from config import MODELS_DIR
 from engine.registry import register_node
 
 
@@ -137,5 +140,180 @@ class BoundingBoxesNode:
         for c in contours or []:
             x, y, w, h = c["bbox"]
             cv2.rectangle(canvas, (x, y), (x + w, y + h), bgr, thickness)
+
+        return {"image": canvas}
+
+
+@register_node("cv/HoughCircles")
+class HoughCirclesNode:
+    NAME = "Hough Circles"
+    CATEGORY = "OpenCV/Detection"
+    INPUTS = [{"name": "image", "type": "IMAGE"}]
+    OUTPUTS = [{"name": "image", "type": "IMAGE"}]
+    WIDGETS = [
+        {"name": "dp", "type": "FLOAT", "default": 1.2, "min": 0.1, "max": 5.0, "step": 0.1},
+        {"name": "min_dist", "type": "INT", "default": 20, "min": 1, "max": 500, "step": 1},
+        {"name": "param1", "type": "FLOAT", "default": 100, "min": 1, "max": 500, "step": 1},
+        {"name": "param2", "type": "FLOAT", "default": 30, "min": 1, "max": 500, "step": 1},
+        {"name": "min_radius", "type": "INT", "default": 0, "min": 0, "max": 500, "step": 1},
+        {"name": "max_radius", "type": "INT", "default": 0, "min": 0, "max": 500, "step": 1},
+    ]
+
+    def run(
+        self,
+        image,
+        dp=1.2,
+        min_dist=20,
+        param1=100,
+        param2=30,
+        min_radius=0,
+        max_radius=0,
+    ):
+        if image.ndim == 3:
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            canvas = image.copy()
+        else:
+            gray = image
+            canvas = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+
+        gray = cv2.medianBlur(gray, 5)
+        circles = cv2.HoughCircles(
+            gray,
+            cv2.HOUGH_GRADIENT,
+            dp=dp,
+            minDist=min_dist,
+            param1=param1,
+            param2=param2,
+            minRadius=int(min_radius),
+            maxRadius=int(max_radius),
+        )
+        if circles is not None:
+            for x, y, r in np.round(circles[0]).astype(int):
+                cv2.circle(canvas, (x, y), r, (0, 255, 0), 2)
+                cv2.circle(canvas, (x, y), 2, (0, 0, 255), 3)
+
+        return {"image": canvas}
+
+
+_TM_METHODS = {
+    "CCOEFF_NORMED": cv2.TM_CCOEFF_NORMED,
+    "CCORR_NORMED": cv2.TM_CCORR_NORMED,
+    "SQDIFF_NORMED": cv2.TM_SQDIFF_NORMED,
+}
+
+
+@register_node("cv/TemplateMatch")
+class TemplateMatchNode:
+    NAME = "Template Match"
+    CATEGORY = "OpenCV/Detection"
+    INPUTS = [{"name": "image", "type": "IMAGE"}, {"name": "template", "type": "IMAGE"}]
+    OUTPUTS = [{"name": "image", "type": "IMAGE"}]
+    WIDGETS = [
+        {
+            "name": "method",
+            "type": "COMBO",
+            "default": "CCOEFF_NORMED",
+            "options": list(_TM_METHODS),
+        },
+        {"name": "threshold", "type": "FLOAT", "default": 0.8, "min": 0.0, "max": 1.0, "step": 0.01},
+    ]
+
+    def run(self, image, template, method="CCOEFF_NORMED", threshold=0.8):
+        canvas = image.copy() if image.ndim == 3 else cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+        gray = image if image.ndim == 2 else cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        tmpl = template if template.ndim == 2 else cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
+        th, tw = tmpl.shape[:2]
+
+        flag = _TM_METHODS.get(method, cv2.TM_CCOEFF_NORMED)
+        result = cv2.matchTemplate(gray, tmpl, flag)
+
+        if flag == cv2.TM_SQDIFF_NORMED:
+            locations = np.where(result <= (1 - threshold))
+        else:
+            locations = np.where(result >= threshold)
+
+        for y, x in zip(*locations):
+            cv2.rectangle(canvas, (int(x), int(y)), (int(x) + tw, int(y) + th), (0, 255, 0), 2)
+
+        return {"image": canvas}
+
+
+@register_node("cv/ConnectedComponents")
+class ConnectedComponentsNode:
+    NAME = "Connected Components"
+    CATEGORY = "OpenCV/Detection"
+    INPUTS = [{"name": "image", "type": "IMAGE"}]
+    OUTPUTS = [{"name": "image", "type": "IMAGE"}]
+    WIDGETS = [
+        {"name": "connectivity", "type": "COMBO", "default": "8", "options": ["4", "8"]},
+        {"name": "min_area", "type": "INT", "default": 0, "min": 0, "max": 100000, "step": 10},
+    ]
+
+    def run(self, image, connectivity="8", min_area=0):
+        gray = image if image.ndim == 2 else cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        _ret, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        num_labels, labels, stats, _centroids = cv2.connectedComponentsWithStats(
+            binary, connectivity=int(connectivity)
+        )
+
+        colors = np.random.RandomState(42).randint(0, 255, size=(num_labels, 3)).astype(np.uint8)
+        colors[0] = 0
+        canvas = colors[labels]
+
+        for i in range(1, num_labels):
+            if stats[i, cv2.CC_STAT_AREA] < min_area:
+                canvas[labels == i] = 0
+
+        return {"image": canvas}
+
+
+# Newer opencv-python builds (5.x) dropped the CascadeClassifier /
+# haarcascades data files from the Python package, so face detection here
+# uses the DNN-based YuNet detector that ships as part of core cv2 instead.
+# Its weights aren't bundled either - they're downloaded once to MODELS_DIR
+# and cached on disk (same "first run downloads a model" pattern already
+# used by the RemoveBackground custom node).
+_YUNET_MODEL_NAME = "face_detection_yunet_2023mar.onnx"
+_YUNET_MODEL_URL = (
+    "https://media.githubusercontent.com/media/opencv/opencv_zoo/main/"
+    "models/face_detection_yunet/face_detection_yunet_2023mar.onnx"
+)
+_FACE_DETECTOR = None
+
+
+def _get_face_detector(width, height, score_threshold):
+    global _FACE_DETECTOR
+    model_path = MODELS_DIR / _YUNET_MODEL_NAME
+    if not model_path.exists():
+        tmp_path = model_path.with_suffix(".onnx.part")
+        urllib.request.urlretrieve(_YUNET_MODEL_URL, tmp_path)
+        tmp_path.rename(model_path)
+
+    if _FACE_DETECTOR is None:
+        _FACE_DETECTOR = cv2.FaceDetectorYN_create(str(model_path), "", (width, height))
+    _FACE_DETECTOR.setInputSize((width, height))
+    _FACE_DETECTOR.setScoreThreshold(score_threshold)
+    return _FACE_DETECTOR
+
+
+@register_node("cv/FaceDetect")
+class FaceDetectNode:
+    NAME = "Face Detect"
+    CATEGORY = "OpenCV/Detection"
+    INPUTS = [{"name": "image", "type": "IMAGE"}]
+    OUTPUTS = [{"name": "image", "type": "IMAGE"}]
+    WIDGETS = [
+        {"name": "score_threshold", "type": "FLOAT", "default": 0.6, "min": 0.1, "max": 1.0, "step": 0.05},
+    ]
+
+    def run(self, image, score_threshold=0.6):
+        canvas = image.copy() if image.ndim == 3 else cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+        h, w = canvas.shape[:2]
+
+        detector = _get_face_detector(w, h, score_threshold)
+        _ret, faces = detector.detect(canvas)
+        for face in faces if faces is not None else []:
+            x, y, fw, fh = face[:4].astype(int)
+            cv2.rectangle(canvas, (x, y), (x + fw, y + fh), (0, 255, 0), 2)
 
         return {"image": canvas}

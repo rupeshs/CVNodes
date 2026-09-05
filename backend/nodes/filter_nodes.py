@@ -30,6 +30,19 @@ class GaussianBlurNode:
         return {"image": cv2.GaussianBlur(image, (k, k), sigma)}
 
 
+@register_node("cv/BoxBlur")
+class BoxBlurNode:
+    NAME = "Box Blur"
+    CATEGORY = "OpenCV/Filters"
+    INPUTS = [{"name": "image", "type": "IMAGE"}]
+    OUTPUTS = [{"name": "image", "type": "IMAGE"}]
+    WIDGETS = [{"name": "ksize", "type": "INT", "default": 5, "min": 1, "max": 51, "step": 1}]
+
+    def run(self, image, ksize=5):
+        k = max(1, int(ksize))
+        return {"image": cv2.blur(image, (k, k))}
+
+
 @register_node("cv/MedianBlur")
 class MedianBlurNode:
     NAME = "Median Blur"

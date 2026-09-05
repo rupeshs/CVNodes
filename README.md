@@ -45,8 +45,12 @@ Open http://127.0.0.1:8000
 
 ## Try the sample workflows
 
-Both use the bundled `backend/uploads/sample.jpg`. Click **Load Graph** in
-the toolbar, pick one of these, then click **Run**.
+Most use the bundled `backend/uploads/sample.jpg` (a shapes graphic - white
+square, orange circle, green pentagon, on a blue gradient, with a
+"CVNodes" text label); `detection_showcase.json` also uses the classic
+`backend/uploads/lena.png` test photo for its `Face Detect` branch, since
+sample.jpg has no face to find. Click **Load Graph** in the toolbar, pick
+one of these, then click **Run**.
 
 - `examples/basic_pipeline.json` - `Load Image` branches into two chains:
   `Brightness/Contrast → Gaussian Blur → Canny Edge → Preview Image`, and
@@ -59,6 +63,25 @@ the toolbar, pick one of these, then click **Run**.
   Morphology (Close) → Find Contours →` (`Preview Image` showing drawn
   contours, and `Bounding Boxes` on the original color image → `Preview
   Image`). Shows the `CONTOURS` data output being consumed by a second node.
+- `examples/color_segmentation.json` - `Load Image → Color Convert (HSV) →`
+  two `Color Range Mask` nodes (orange + green ranges) `→ Bitwise Op (OR) →
+  Apply Mask →  Preview Image`, plus a `Preview Image` of the raw combined
+  mask. Isolates the circle and pentagon by color, masking out everything
+  else - the standard HSV color-segmentation pattern.
+- `examples/channel_ops_and_equalize.json` - three independent branches off
+  one `Load Image`: `Split Channels → Merge Channels` (channels re-wired to
+  swap blue/red, a classic channel-swap color effect) `→ Preview Image`;
+  `Histogram Equalize (CLAHE) → Preview Image`; and `Box Blur → Preview
+  Image`.
+- `examples/detection_showcase.json` - four independent branches: `Hough
+  Circles`, `Grayscale → Threshold (OTSU) → Connected Components` (each
+  blob gets a distinct color), and `Crop → Template Match` (crops a patch
+  of the circle, then finds where it came from) all read `sample.jpg`;
+  `Face Detect` reads `lena.png` instead (a separate `Load Image` node),
+  since sample.jpg has no face to find.
+- `examples/perspective_warp.json` - `Load Image → Perspective Warp →
+  Preview Image`. Drags each of the image's 4 corners inward by a few
+  percent to demonstrate correcting/adding perspective distortion.
 
 ## Using it
 
@@ -149,13 +172,15 @@ backend/
   nodes/                built-in nodes (ships with the project)
     __init__.py           auto-imports every module in this package
     io_nodes.py            LoadImage, PreviewImage, SaveImage
-    color_nodes.py          Grayscale, InvertColors, BrightnessContrast
-    filter_nodes.py         GaussianBlur, MedianBlur, CannyEdge, Sobel, Laplacian, BilateralFilter,
-                              Sharpen, Dilate, Erode, Morphology
+    color_nodes.py          Grayscale, InvertColors, BrightnessContrast, ColorConvert, InRange,
+                              SplitChannels, MergeChannels, HistogramEqualize
+    filter_nodes.py         GaussianBlur, MedianBlur, BoxBlur, CannyEdge, Sobel, Laplacian,
+                              BilateralFilter, Sharpen, Dilate, Erode, Morphology
     threshold_nodes.py      Threshold, AdaptiveThreshold
-    transform_nodes.py      Resize, Rotate, Flip, Crop
-    compositing_nodes.py    Blend
-    detection_nodes.py      HoughLines
+    transform_nodes.py      Resize, Rotate, Flip, Crop, PerspectiveWarp
+    compositing_nodes.py    Blend, BitwiseOp, ApplyMask
+    detection_nodes.py      HoughLines, FindContours, BoundingBoxes, HoughCircles, TemplateMatch,
+                              ConnectedComponents, FaceDetect
   custom_nodes/         your extensions go here (see custom_nodes/README.md)
     __init__.py           auto-imports every module/subfolder in this package
     removebg/             example node with its own dependency:
@@ -168,6 +193,10 @@ frontend/
 ```
 
 ## Notes / current limitations (kept simple on purpose)
+
+- `Face Detect` downloads its YuNet model (~230 KB) to `backend/models/` the
+  first time it runs (needs internet once); cached after that, same idea as
+  `Remove Background`'s model download.
 
 - No caching between runs — every Run re-executes the whole graph.
 - Single-user, no auth — meant for local use.

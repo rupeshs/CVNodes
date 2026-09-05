@@ -13,8 +13,13 @@ backend/.venv/
 backend/uploads/*
 !backend/uploads/.gitkeep
 !backend/uploads/sample.jpg
+!backend/uploads/lena.png
 backend/outputs/*
 !backend/outputs/.gitkeep
+
+# Downloaded model weights (e.g. YuNet face detector), cached on first use
+backend/models/*
+!backend/models/.gitkeep
 
 # Auto-install cache marker for custom node dependencies (see engine/discovery.py)
 .requirements_installed
