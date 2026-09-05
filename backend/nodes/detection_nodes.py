@@ -36,7 +36,9 @@ class HoughLinesNode:
             maxLineGap=max_line_gap,
         )
         if lines is not None:
-            for x1, y1, x2, y2 in lines[:, 0]:
+            # cv2.HoughLinesP's return shape changed across opencv-python
+            # versions ((N, 1, 4) vs (N, 4)) - reshape(-1, 4) works for both.
+            for x1, y1, x2, y2 in lines.reshape(-1, 4):
                 cv2.line(canvas, (x1, y1), (x2, y2), (0, 0, 255), 2)
 
         return {"image": canvas}

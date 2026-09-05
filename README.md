@@ -89,6 +89,12 @@ one of these, then click **Run**.
   `perspective_warp.json`'s manual sliders - the classic "document scanner"
   pattern (find the page's outline, then rectify it), demoed here on
   sample.jpg's white square.
+- `examples/hough_lines.json` - `Load Image → Canny Edge → Hough Lines →
+  Preview Image`. `Hough Lines` runs directly on whatever it's given (no
+  edge detection of its own), so feeding it a raw image instead of an edge
+  map floods the result with spurious lines - Canny Edge first is the
+  standard pairing. Cleanly finds the square and pentagon's straight edges
+  while correctly ignoring the circle.
 
 ## Using it
 
