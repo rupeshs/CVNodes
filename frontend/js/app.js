@@ -224,12 +224,14 @@ titleMeasureCtx.font = "bold 14px Arial";
 const PREVIEW_MAX_WIDTH = 260;
 const PREVIEW_MAX_HEIGHT = 200;
 const PREVIEW_MARGIN = 8;
+const PREVIEW_TEXT_LINE_HEIGHT = 20;
+const PREVIEW_TEXT_PAD_V = 10;
 
 function registerDynamicNode(def) {
-  // Output nodes (Preview/Save Image) show their result thumbnail once the
-  // graph runs; LoadImage shows the picked image immediately after upload -
-  // both use the same inline-preview mechanism below.
-  const hasImagePreview =
+  // Output nodes (Preview/Save Image, Preview Text) show their result once
+  // the graph runs; LoadImage shows the picked image immediately after
+  // upload - all three share the same inline-preview mechanism below.
+  const hasPreview =
     def.is_output_node || (def.widgets || []).some((w) => w.type === "IMAGE_UPLOAD");
 
   function DynamicNode() {
@@ -242,35 +244,63 @@ function registerDynamicNode(def) {
     this.size = this.computeSize();
     const titleWidth = titleMeasureCtx.measureText(def.name).width;
     this.size[0] = Math.max(this.size[0], titleWidth + 40);
-    if (hasImagePreview) {
+    if (hasPreview) {
       this.baseSize = [this.size[0], this.size[1]];
       this.previewImg = null;
+      this.previewText = null;
     }
   }
   DynamicNode.title = def.name;
   DynamicNode.desc = `${def.category} - ${def.type}`;
   DynamicNode.prototype.onExecute = function () {}; // execution happens server-side
 
-  if (hasImagePreview) {
-    // Draws the last result image inline under the node's widgets, like
-    // ComfyUI's preview/save nodes - onDrawForeground runs after widgets, in
-    // a coordinate space local to the node's content area (below the title).
+  if (hasPreview) {
+    // Draws the last result (image or text) inline under the node's widgets,
+    // like ComfyUI's preview/save nodes - onDrawForeground runs after
+    // widgets, in a coordinate space local to the node's content area
+    // (below the title).
     DynamicNode.prototype.onDrawForeground = function (ctx) {
-      if (this.flags.collapsed || !this.previewImg) return;
+      if (this.flags.collapsed) return;
       const top = this.baseSize[1] + PREVIEW_MARGIN;
-      const availW = this.size[0] - PREVIEW_MARGIN * 2;
-      const availH = this.size[1] - top - PREVIEW_MARGIN;
-      if (availW <= 0 || availH <= 0) return;
-      const img = this.previewImg;
-      const scale = Math.min(availW / img.width, availH / img.height);
-      const w = img.width * scale;
-      const h = img.height * scale;
-      ctx.drawImage(img, PREVIEW_MARGIN + (availW - w) / 2, top, w, h);
+
+      if (this.previewImg) {
+        const availW = this.size[0] - PREVIEW_MARGIN * 2;
+        const availH = this.size[1] - top - PREVIEW_MARGIN;
+        if (availW <= 0 || availH <= 0) return;
+        const img = this.previewImg;
+        const scale = Math.min(availW / img.width, availH / img.height);
+        const w = img.width * scale;
+        const h = img.height * scale;
+        ctx.drawImage(img, PREVIEW_MARGIN + (availW - w) / 2, top, w, h);
+        return;
+      }
+
+      if (this.previewText != null) {
+        const lines = this.previewText === "" ? ["(empty)"] : this.previewText.split("\n");
+        const boxW = this.size[0] - PREVIEW_MARGIN * 2;
+        const boxH = lines.length * PREVIEW_TEXT_LINE_HEIGHT + PREVIEW_TEXT_PAD_V * 2;
+        ctx.fillStyle = "#2a2a32";
+        ctx.strokeStyle = "#454550";
+        ctx.beginPath();
+        ctx.roundRect(PREVIEW_MARGIN, top, boxW, boxH, 4);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#e6e6ec";
+        ctx.font = lines.length > 1 ? "14px monospace" : "bold 16px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        lines.forEach((line, i) => {
+          ctx.fillText(line, this.size[0] / 2, top + PREVIEW_TEXT_PAD_V + i * PREVIEW_TEXT_LINE_HEIGHT + PREVIEW_TEXT_LINE_HEIGHT / 2);
+        });
+        ctx.textAlign = "left";
+        ctx.textBaseline = "alphabetic";
+      }
     };
 
     DynamicNode.prototype.setPreviewImage = function (dataUrl) {
       const img = new Image();
       img.onload = () => {
+        this.previewText = null;
         this.previewImg = img;
         const scale = Math.min(PREVIEW_MAX_WIDTH / img.width, PREVIEW_MAX_HEIGHT / img.height, 1);
         const previewW = img.width * scale;
@@ -280,6 +310,16 @@ function registerDynamicNode(def) {
         this.setDirtyCanvas(true, true);
       };
       img.src = dataUrl;
+    };
+
+    DynamicNode.prototype.setPreviewText = function (text) {
+      this.previewImg = null;
+      this.previewText = text;
+      const lineCount = text === "" ? 1 : text.split("\n").length;
+      const boxH = lineCount * PREVIEW_TEXT_LINE_HEIGHT + PREVIEW_TEXT_PAD_V * 2;
+      this.size[0] = this.baseSize[0];
+      this.size[1] = this.baseSize[1] + boxH + PREVIEW_MARGIN * 2;
+      this.setDirtyCanvas(true, true);
     };
   }
 
@@ -309,10 +349,18 @@ function restoreLoadImagePreviews(graph) {
 function applyNodePreviews(graph, results) {
   for (const [nodeId, payload] of Object.entries(results || {})) {
     const node = graph.getNodeById(Number(nodeId));
-    if (!node || typeof node.setPreviewImage !== "function") continue;
-    const imageValue = Object.values(payload.values).find((v) => v.kind === "image");
-    if (imageValue) {
+    if (!node) continue;
+    const values = Object.values(payload.values);
+
+    const imageValue = values.find((v) => v.kind === "image");
+    if (imageValue && typeof node.setPreviewImage === "function") {
       node.setPreviewImage(`data:image/png;base64,${imageValue.data}`);
+      continue;
+    }
+
+    const rawValue = values.find((v) => v.kind === "raw");
+    if (rawValue && typeof node.setPreviewText === "function") {
+      node.setPreviewText(String(rawValue.data));
     }
   }
 }

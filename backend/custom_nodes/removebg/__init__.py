@@ -19,7 +19,7 @@ class RemoveBackgroundNode:
     NAME = "Remove Background"
     CATEGORY = "OpenCV/Compositing"
     INPUTS = [{"name": "image", "type": "IMAGE"}]
-    OUTPUTS = [{"name": "image", "type": "IMAGE"}]
+    OUTPUTS = [{"name": "image", "type": "IMAGE"}, {"name": "mask", "type": "IMAGE"}]
     WIDGETS = []
 
     def run(self, image):
@@ -29,4 +29,9 @@ class RemoveBackgroundNode:
             image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
         rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         cutout_rgba = remove(rgb, session=_get_session())
-        return {"image": cv2.cvtColor(cutout_rgba, cv2.COLOR_RGBA2BGRA)}
+        alpha = cutout_rgba[:, :, 3]
+        _, mask = cv2.threshold(alpha, 127, 255, cv2.THRESH_BINARY)
+        return {
+            "image": cv2.cvtColor(cutout_rgba, cv2.COLOR_RGBA2BGRA),
+            "mask": mask,
+        }

@@ -56,9 +56,11 @@ one of these, then click **Run**.
   `Brightness/Contrast → Gaussian Blur → Canny Edge → Preview Image`, and
   `Grayscale → Save Image`.
 - `examples/remove_background.json` - `Load Image → Remove Background →`
-  (`Preview Image` + `Save Image`). Uses the `cv/RemoveBackground` custom
-  node (see below) - the first run downloads/loads the segmentation model
-  and can take ~30s; after that it's fast.
+  (`Preview Image` + `Save Image` off the `image` output, `Preview Image`
+  off the `mask` output). Uses the `cv/RemoveBackground` custom node (see
+  below) - the first run downloads/loads the segmentation model and can
+  take ~30s; after that it's fast. `mask` is the binary (0/255) foreground
+  mask, handy for compositing without needing the BGRA alpha channel.
 - `examples/find_contours.json` - `Load Image → Grayscale → Threshold (OTSU) →
   Morphology (Close) → Find Contours →` (`Preview Image` showing drawn
   contours, and `Bounding Boxes` on the original color image → `Preview
@@ -95,6 +97,31 @@ one of these, then click **Run**.
   map floods the result with spurious lines - Canny Edge first is the
   standard pairing. Cleanly finds the square and pentagon's straight edges
   while correctly ignoring the circle.
+- `examples/text_recognition.json` - `Load Image → Text Recognition
+  (CRNN) → Preview Text`, reading `uploads/sample_text.png` (a generated
+  "opencv123" wordmark - letters and digits together) and printing back
+  `opencv123`. This is text *recognition* (reading a crop you already
+  have), not text *detection*
+  (finding where text sits in a larger scene) - there's no
+  localization/bounding-box step here, so point `Load Image` at an
+  already-tightly-cropped single word or line. That tightness matters: a
+  crop with much more empty margin than the text itself (e.g. a big
+  fixed-size canvas with a short word centered in it) tends to make CRNN
+  hallucinate trailing garbage characters after the real word - crop close
+  to the text's own bounding box, not a generously padded box around it.
+- `cv/TextRecognitionCRNN` - text recognition using the CRNN model from
+  the
+  [OpenCV Zoo](https://github.com/opencv/opencv_zoo/tree/main/models/text_recognition_crnn)
+  (`text_recognition_CRNN_EN_2021sep.onnx`, ~34 MB, downloaded once to
+  `backend/models/` on first use - same pattern as `Face Detect`'s YuNet
+  weights). Recognizes one cropped text image at a time (`image → text`)
+  - feed it any single word/line crop. To see its output, wire `text`
+  into `Preview Text` (`io_nodes.py`) - the same "shows its result inline
+  once the graph runs" mechanism `Preview Image` uses, just for a plain
+  string instead of a picture. Without a `Preview Text` (or another
+  output node) downstream, a node's result still runs but isn't returned
+  to the browser at all - only output-flagged nodes (`Preview Image`,
+  `Preview Text`, `Save Image`) are.
 
 ## Using it
 
@@ -184,7 +211,7 @@ backend/
     discovery.py           shared auto-import + per-node auto-install used by nodes/ and custom_nodes/
   nodes/                built-in nodes (ships with the project)
     __init__.py           auto-imports every module in this package
-    io_nodes.py            LoadImage, PreviewImage, SaveImage
+    io_nodes.py            LoadImage, PreviewImage, PreviewText, SaveImage
     color_nodes.py          Grayscale, InvertColors, BrightnessContrast, ColorConvert, InRange,
                               SplitChannels, MergeChannels, HistogramEqualize
     filter_nodes.py         GaussianBlur, MedianBlur, BoxBlur, CannyEdge, Sobel, Laplacian,
@@ -194,6 +221,7 @@ backend/
     compositing_nodes.py    Blend, BitwiseOp, ApplyMask
     detection_nodes.py      HoughLines, FindContours, ApproxQuad, BoundingBoxes, HoughCircles,
                               TemplateMatch, ConnectedComponents, FaceDetect
+    ocr_nodes.py             TextRecognitionCRNN
   custom_nodes/         your extensions go here (see custom_nodes/README.md)
     __init__.py           auto-imports every module/subfolder in this package
     removebg/             example node with its own dependency:

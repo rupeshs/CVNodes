@@ -38,6 +38,19 @@ class PreviewImageNode:
         return {"image": image}
 
 
+@register_node("cv/PreviewText")
+class PreviewTextNode:
+    NAME = "Preview Text"
+    CATEGORY = "IO"
+    INPUTS = [{"name": "text", "type": "TEXT"}]
+    OUTPUTS = []
+    WIDGETS = []
+    IS_OUTPUT_NODE = True
+
+    def run(self, text):
+        return {"text": text}
+
+
 @register_node("cv/SaveImage")
 class SaveImageNode:
     NAME = "Save Image"

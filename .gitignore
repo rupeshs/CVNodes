@@ -14,6 +14,7 @@ backend/uploads/*
 !backend/uploads/.gitkeep
 !backend/uploads/sample.jpg
 !backend/uploads/lena.png
+!backend/uploads/sample_text.png
 backend/outputs/*
 !backend/outputs/.gitkeep
 

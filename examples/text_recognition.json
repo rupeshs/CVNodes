@@ -1,0 +1,58 @@
+{
+  "last_node_id": 3,
+  "last_link_id": 2,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "cv/LoadImage",
+      "pos": [40, 160],
+      "size": [220, 66],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        { "name": "image", "type": "IMAGE", "links": [1] }
+      ],
+      "properties": {},
+      "widgets_values": ["sample_text.png"]
+    },
+    {
+      "id": 2,
+      "type": "cv/TextRecognitionCRNN",
+      "pos": [320, 160],
+      "size": [210, 60],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        { "name": "image", "type": "IMAGE", "link": 1 }
+      ],
+      "outputs": [
+        { "name": "text", "type": "TEXT", "links": [2] }
+      ],
+      "properties": {},
+      "widgets_values": [false]
+    },
+    {
+      "id": 3,
+      "type": "cv/PreviewText",
+      "pos": [580, 160],
+      "size": [180, 26],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        { "name": "text", "type": "TEXT", "link": 2 }
+      ],
+      "properties": {}
+    }
+  ],
+  "links": [
+    [1, 1, 0, 2, 0, "IMAGE"],
+    [2, 2, 0, 3, 0, "TEXT"]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {},
+  "version": 0.4
+}
